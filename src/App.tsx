@@ -17,37 +17,22 @@ async function uploadToPastefy(content: string): Promise<{ raw_url: string; past
   return data;
 }
 
-async function obfuscateScript(script: string): Promise<{ obfuscated?: string; script?: string; result?: string }> {
-  const response = await fetch(`${BASE_URL}/api/obfuscate`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ script }),
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || "Obfuscation failed");
-  return data;
-}
-
-async function obfuscateAndUpload(script: string): Promise<{ raw_url: string; paste_id: string }> {
-  const obfuscateResult = await obfuscateScript(script);
-  const obfuscatedCode = obfuscateResult.obfuscated || obfuscateResult.script || obfuscateResult.result;
-  if (!obfuscatedCode) throw new Error("Obfuscate API returned no code");
-  return uploadToPastefy(obfuscatedCode);
-}
-
 async function lookupRobloxUser(username: string): Promise<{ id: number; name: string; avatarUrl: string | null }> {
-  const proxies = [
-    "https://corsproxy.io/?url=",
-    "https://api.allorigins.win/raw?url=",
-    "https://api.codetabs.com/v1/proxy?quest=",
-  ];
-
   const robloxUrl = `https://api.roblox.com/users/get-by-username?username=${encodeURIComponent(username)}`;
   let userData: any = null;
 
-  for (const proxy of proxies) {
+  const proxies = [
+    `https://corsproxy.io/?url=${encodeURIComponent(robloxUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(robloxUrl)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(robloxUrl)}`,
+  ];
+
+  for (const url of proxies) {
     try {
-      const r = await fetch(proxy + encodeURIComponent(robloxUrl));
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3000);
+      const r = await fetch(url, { signal: controller.signal });
+      clearTimeout(timer);
       if (!r.ok) continue;
       const data = await r.json();
       if (data.Id) { userData = data; break; }
@@ -59,15 +44,14 @@ async function lookupRobloxUser(username: string): Promise<{ id: number; name: s
   let avatarUrl: string | null = null;
   try {
     const thumbUrl = `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userData.Id}&size=150x150&format=Png&isCircular=true`;
-    for (const proxy of proxies) {
-      try {
-        const res = await fetch(proxy + encodeURIComponent(thumbUrl));
-        if (res.ok) {
-          const d = await res.json();
-          const t = d.data?.[0];
-          if (t?.state === "Completed" && t.imageUrl) { avatarUrl = t.imageUrl; break; }
-        }
-      } catch { continue; }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3000);
+    const r = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(thumbUrl)}`, { signal: controller.signal });
+    clearTimeout(timer);
+    if (r.ok) {
+      const d = await r.json();
+      const t = d.data?.[0];
+      if (t?.state === "Completed" && t.imageUrl) avatarUrl = t.imageUrl;
     }
   } catch {}
 
