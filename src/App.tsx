@@ -18,44 +18,11 @@ async function uploadToPastefy(content: string): Promise<{ raw_url: string; past
 }
 
 async function lookupRobloxUser(username: string): Promise<{ id: number; name: string; avatarUrl: string | null }> {
-  const robloxUrl = `https://api.roblox.com/users/get-by-username?username=${encodeURIComponent(username)}`;
-  let userData: any = null;
-
-  const proxies = [
-    `https://corsproxy.io/?url=${encodeURIComponent(robloxUrl)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(robloxUrl)}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(robloxUrl)}`,
-  ];
-
-  for (const url of proxies) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 3000);
-      const r = await fetch(url, { signal: controller.signal });
-      clearTimeout(timer);
-      if (!r.ok) continue;
-      const data = await r.json();
-      if (data.Id) { userData = data; break; }
-    } catch { continue; }
-  }
-
-  if (!userData) throw new Error(`No Roblox user found with username "${username}"`);
-
-  let avatarUrl: string | null = null;
-  try {
-    const thumbUrl = `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userData.Id}&size=150x150&format=Png&isCircular=true`;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3000);
-    const r = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(thumbUrl)}`, { signal: controller.signal });
-    clearTimeout(timer);
-    if (r.ok) {
-      const d = await r.json();
-      const t = d.data?.[0];
-      if (t?.state === "Completed" && t.imageUrl) avatarUrl = t.imageUrl;
-    }
-  } catch {}
-
-  return { id: userData.Id, name: userData.Username, avatarUrl };
+  const r = await fetch(`https://machonachosab.emirmacho0.workers.dev/?username=${encodeURIComponent(username)}`);
+  if (!r.ok) throw new Error(`No Roblox user found with username "${username}"`);
+  const data = await r.json();
+  if (data.error) throw new Error(data.error);
+  return { id: data.id, name: data.name, avatarUrl: data.avatarUrl };
 }
 async function resolveRobloxUsername(username: string): Promise<number> {
   const user = await lookupRobloxUser(username);
