@@ -5,7 +5,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   // GitHub Pages: /<repo-name>/ olarak değiştir veya özel domain kullanıyorsan '/' yap
-  base: '/website/',
+  base: '/',
   plugins: [
     react(),
     tailwindcss(),
