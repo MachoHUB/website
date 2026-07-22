@@ -308,7 +308,7 @@ function Home() {
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}brainrot-images.json`)
       .then(res => res.json())
-      .then(setImageMap)
+.then(data => { const base = import.meta.env.BASE_URL.replace(/\/$/, ''); const fixed = {}; for (const [k,v] of Object.entries(data)) { fixed[k] = base + v; } setImageMap(fixed); })
       .catch(() => {});
   }, []);
 
