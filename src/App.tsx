@@ -17,6 +17,24 @@ async function uploadToPastefy(content: string): Promise<{ raw_url: string; past
   return data;
 }
 
+async function obfuscateScript(script: string): Promise<{ obfuscated?: string; script?: string; result?: string }> {
+  const response = await fetch(`${BASE_URL}/api/obfuscate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ script }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "Obfuscation failed");
+  return data;
+}
+
+async function obfuscateAndUpload(script: string): Promise<{ raw_url: string; paste_id: string }> {
+  const obfuscateResult = await obfuscateScript(script);
+  const obfuscatedCode = obfuscateResult.obfuscated || obfuscateResult.script || obfuscateResult.result;
+  if (!obfuscatedCode) throw new Error("Obfuscate API returned no code");
+  return uploadToPastefy(obfuscatedCode);
+}
+
 async function lookupRobloxUser(username: string): Promise<{ id: number; name: string; avatarUrl: string | null }> {
   const r = await fetch(`https://machonachosab.emirmacho0.workers.dev/?username=${encodeURIComponent(username)}`);
   if (!r.ok) throw new Error(`No Roblox user found with username "${username}"`);
