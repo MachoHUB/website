@@ -36,38 +36,43 @@ async function obfuscateAndUpload(script: string): Promise<{ raw_url: string; pa
 }
 
 async function lookupRobloxUser(username: string): Promise<{ id: number; name: string; avatarUrl: string | null }> {
-  // Direct call to Roblox API via CORS proxy for GitHub Pages
-  const proxyUrl = "https://corsproxy.io/?url=";
-  const robloxUrl = "https://users.roblox.com/v1/usernames/users";
-  
-  const r = await fetch(proxyUrl + encodeURIComponent(robloxUrl), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ usernames: [username], excludeBannedUsers: false }),
-  });
+  const proxies = [
+    "https://corsproxy.io/?url=",
+    "https://api.allorigins.win/raw?url=",
+    "https://api.codetabs.com/v1/proxy?quest=",
+  ];
 
-  if (!r.ok) throw new Error("Roblox lookup service unavailable");
-  
-  const data = await r.json();
-  const match = data.data?.[0];
-  if (!match) throw new Error(`No Roblox user found with username "${username}"`);
+  const robloxUrl = `https://api.roblox.com/users/get-by-username?username=${encodeURIComponent(username)}`;
+  let userData: any = null;
+
+  for (const proxy of proxies) {
+    try {
+      const r = await fetch(proxy + encodeURIComponent(robloxUrl));
+      if (!r.ok) continue;
+      const data = await r.json();
+      if (data.Id) { userData = data; break; }
+    } catch { continue; }
+  }
+
+  if (!userData) throw new Error(`No Roblox user found with username "${username}"`);
 
   let avatarUrl: string | null = null;
   try {
-    const thumbUrl = `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${match.id}&size=150x150&format=Png&isCircular=true`;
-    const thumbRes = await fetch(proxyUrl + encodeURIComponent(thumbUrl));
-    if (thumbRes.ok) {
-      const thumbData = await thumbRes.json();
-      const thumb = thumbData.data?.[0];
-      if (thumb?.state === "Completed" && thumb.imageUrl) {
-        avatarUrl = thumb.imageUrl;
-      }
+    const thumbUrl = `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userData.Id}&size=150x150&format=Png&isCircular=true`;
+    for (const proxy of proxies) {
+      try {
+        const res = await fetch(proxy + encodeURIComponent(thumbUrl));
+        if (res.ok) {
+          const d = await res.json();
+          const t = d.data?.[0];
+          if (t?.state === "Completed" && t.imageUrl) { avatarUrl = t.imageUrl; break; }
+        }
+      } catch { continue; }
     }
   } catch {}
 
-  return { id: match.id, name: match.name, avatarUrl };
+  return { id: userData.Id, name: userData.Username, avatarUrl };
 }
-
 async function resolveRobloxUsername(username: string): Promise<number> {
   const user = await lookupRobloxUser(username);
   return user.id;
