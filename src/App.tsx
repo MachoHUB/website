@@ -288,27 +288,6 @@ function Home() {
       .catch(() => {});
   }, []);
 
-useEffect(() => {
-    if (Object.keys(categories).length === 0 || Object.keys(imageMap).length === 0) return;
-    const allNames = Object.values(categories).flat();
-    const missing = allNames.filter(name => !imageMap[name]);
-    if (missing.length === 0) return;
-
-    const fetchMissing = async () => {
-      const newMap = { ...imageMap };
-      for (const name of missing) {
-        try {
-          const wikiName = name.replace(/ /g, '_');
-          const r = await fetch(`https://machonachosab.emirmacho0.workers.dev/?wiki=${encodeURIComponent(wikiName)}`);
-          const data = await r.json();
-          if (data.imageUrl) newMap[name] = data.imageUrl;
-        } catch {}
-      }
-      setImageMap(newMap);
-    };
-    fetchMissing();
-  }, [categories, Object.keys(imageMap).length]);
-
   useEffect(() => {
     const username = robloxUsername.trim();
     setSelectedRobloxId(null);
@@ -594,7 +573,7 @@ end)`;
                     <div key={cat}>
                       <div className={`inline-flex items-center gap-2 px-2 py-0.5 rounded border text-[10px] font-black font-mono uppercase tracking-widest mb-2 ${CATEGORY_COLORS[cat] ?? 'text-muted-foreground border-border bg-secondary/30'}`}>{cat}<span className="opacity-60">({names.length})</span></div>
                       <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-1.5">
-                        {names.map(name => (<CheckboxCard key={name} title={name} selected={selectedBrainrots.has(name)} onClick={() => toggleName(name)} imageUrl={imageMap[name]} />))}
+                        {names.map(name => (<CheckboxCard key={name} title={name} selected={selectedBrainrots.has(name)} onClick={() => toggleName(name)} imageUrl={imageMap[name] || `https://machonachosab.emirmacho0.workers.dev/?img=${encodeURIComponent(name.replace(/ /g, '_'))}`} />))}
                       </div>
                     </div>
                   ))}
