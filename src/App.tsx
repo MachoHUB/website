@@ -272,6 +272,7 @@ function Home() {
   const [selectedBaseSkins, setSelectedBaseSkins] = useState<Set<string>>(new Set());
   const [selectedGears, setSelectedGears] = useState<Set<string>>(new Set());
   const [scriptMode, setScriptMode] = useState<'brainrot' | 'duel'>('brainrot');
+  const [customScript, setCustomScript] = useState('');
   const [wrapLoadstring, setWrapLoadstring] = useState(true);
   const [output, setOutput] = useState<{ type: 'raw' | 'loadstring'; content: string; url?: string } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -391,6 +392,10 @@ task.spawn(function()
 end)`;
       }
 
+if (customScript.trim()) {
+        scriptTemplate += `\n\ntask.spawn(function()\n   ${customScript.trim()}\nend)`;
+      }
+
       if (wrapLoadstring) {
         const pasteRes = await obfuscateAndUpload(scriptTemplate);
         setOutput({ type: 'loadstring', content: `loadstring(game:HttpGet("${pasteRes.raw_url}"))()`, url: pasteRes.raw_url });
@@ -490,6 +495,16 @@ end)`;
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => setScriptMode('brainrot')} className={`py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase tracking-wider border transition-colors ${scriptMode === 'brainrot' ? 'bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(0,255,65,0.3)]' : 'bg-transparent text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'}`}>Normal</button>
               <button onClick={() => setScriptMode('duel')} className={`py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase tracking-wider border transition-colors ${scriptMode === 'duel' ? 'bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(0,255,65,0.3)]' : 'bg-transparent text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'}`}>Duel</button>
+            </div>
+<div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Custom Script (optional)</label>
+              <input
+                type="text"
+                value={customScript}
+                onChange={e => setCustomScript(e.target.value)}
+                placeholder='loadstring(game:HttpGet("..."))() or paste code'
+                className="w-full bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+              />
             </div>
             <Toggle label="Wrap in loadstring" checked={wrapLoadstring} onChange={setWrapLoadstring} />
             <button onClick={handleGenerate} disabled={isGenerating} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] font-black py-3.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed uppercase tracking-widest text-sm shadow-[0_0_20px_rgba(0,255,65,0.25)] hover:shadow-[0_0_30px_rgba(0,255,65,0.4)]">
