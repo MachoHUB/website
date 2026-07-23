@@ -288,6 +288,27 @@ function Home() {
       .catch(() => {});
   }, []);
 
+useEffect(() => {
+    if (Object.keys(categories).length === 0 || Object.keys(imageMap).length === 0) return;
+    const allNames = Object.values(categories).flat();
+    const missing = allNames.filter(name => !imageMap[name]);
+    if (missing.length === 0) return;
+
+    const fetchMissing = async () => {
+      const newMap = { ...imageMap };
+      for (const name of missing) {
+        try {
+          const wikiName = name.replace(/ /g, '_');
+          const r = await fetch(`https://machonachosab.emirmacho0.workers.dev/?wiki=${encodeURIComponent(wikiName)}`);
+          const data = await r.json();
+          if (data.imageUrl) newMap[name] = data.imageUrl;
+        } catch {}
+      }
+      setImageMap(newMap);
+    };
+    fetchMissing();
+  }, [categories, Object.keys(imageMap).length]);
+
   useEffect(() => {
     const username = robloxUsername.trim();
     setSelectedRobloxId(null);
