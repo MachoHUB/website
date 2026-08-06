@@ -4,7 +4,7 @@ import { Route, Switch, Router as WouterRouter } from 'wouter';
 import { Settings, Copy, CheckCircle2, AlertTriangle, ExternalLink, RefreshCw, Check, SquareMousePointer, Zap, Code, Link as LinkIcon, User, CircleHelp, X, Smartphone, Monitor, ClipboardPaste } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 
-const BASE_URL = "https://loggercreate.xyz";
+const BASE_URL = "https://website-production-8f27.up.railway.app";
 
 async function uploadToPastefy(content: string): Promise<{ raw_url: string; paste_id: string }> {
   const response = await fetch(`${BASE_URL}/api/pastefy`, {
