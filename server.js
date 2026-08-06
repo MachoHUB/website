@@ -4,12 +4,13 @@ import * as cheerio from "cheerio";
 import rateLimit from "express-rate-limit";
 import path from "path";
 import { fileURLToPath } from "url";
+import cors from "cors";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
 const PASTEFY_API_KEY = process.env.PASTEFY_API_KEY || "";
-
+app.use(cors({ origin: "*" }));
 app.use(express.json({ limit: "2mb" }));
 
 // ── Brainrot scraper ────────────────────────────────────────────
