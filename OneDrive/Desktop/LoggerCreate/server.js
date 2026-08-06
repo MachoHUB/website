@@ -1,5 +1,6 @@
 import express from "express";
 import axios from "axios";
+import cors from "cors";
 import * as cheerio from "cheerio";
 import rateLimit from "express-rate-limit";
 import path from "path";
@@ -10,15 +11,18 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const PASTEFY_API_KEY = process.env.PASTEFY_API_KEY || "";
 
+app.use(cors({
+  origin: ["https://loggercreate.xyz", "https://website-production-8f27.up.railway.app"],
+  methods: ["GET", "POST"],
+}));
 app.use(express.json({ limit: "2mb" }));
 
-// ── Brainrot scraper ────────────────────────────────────────────
+// ── Brainrot scraper ─────────────────────────────────────────────
 const BRAINROT_URL = "https://www.eldorado.gg/blog/all-brainrots-in-steal-a-brainrot/";
 const RARITIES = ["OG", "Secret", "Brainrot God", "Mythic", "Legendary", "Epic", "Rare", "Common"];
 
 let brainrotsData = {};
 RARITIES.forEach(r => (brainrotsData[r] = []));
-let flatBrainrots = [];
 
 function cleanText(text) {
   return text.replace(/\s+/g, " ").trim();
@@ -46,24 +50,22 @@ async function updateBrainrots() {
         nameLower.includes("brainrot") ||
         nameLower === "name" ||
         nameLower === "smurf cat"
-      )
-        return;
+      ) return;
       if (!newData[rarity].includes(name)) newData[rarity].push(name);
     });
 
     brainrotsData = newData;
-    flatBrainrots = [];
-    RARITIES.forEach(r => flatBrainrots.push(...newData[r]));
-    console.log("Brainrots updated. Total:", flatBrainrots.length);
+    const total = RARITIES.reduce((n, r) => n + newData[r].length, 0);
+    console.log("Brainrots updated. Total:", total);
   } catch (err) {
     console.error("Failed to update brainrots:", err.message);
   }
 }
 
 updateBrainrots();
-setInterval(updateBrainrots, 60 * 60 * 1000); // her saat güncelle
+setInterval(updateBrainrots, 60 * 60 * 1000);
 
-// ── API Routes ──────────────────────────────────────────────────
+// ── API Routes ───────────────────────────────────────────────────
 
 app.get("/api/brainrots", (req, res) => {
   res.json(brainrotsData);
@@ -125,7 +127,7 @@ app.post(
   }
 );
 
-// ── Frontend (build sonrası dist/ klasörünü serve eder) ─────────
+// ── Frontend ─────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, "dist")));
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
